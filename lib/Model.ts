@@ -64,7 +64,7 @@ export interface ModelInterface {
     relate: () => Promise<any>,
     getConnection: () => any,
     set: (key: string, value: any) => void,
-    store: (additionalData?: any) => Promise<any>,
+    save: (additionalData?: any) => Promise<any>,
     update: (data: any) => Promise<any>,
     duplicate: () => Promise<any>,
     resetHasMany: (relation: string, foreignIdColumn: string, distantId: string, data: any, options?: ModelOptions) => Promise<any>,
@@ -408,7 +408,7 @@ export class Model implements ModelInterface {
         this._defaultSelectQuery = query;
     }
 
-    public async store(additionalData?: any): Promise<any> {
+    public async save(additionalData?: any): Promise<any> {
         await (this.constructor as typeof Model).loadSchema();
         const attributes = this.attributes();
         const insertionData = { ...attributes, ...additionalData };
@@ -463,12 +463,30 @@ export class Model implements ModelInterface {
         return (this.constructor as typeof Model).make(response.data, response);
     }
 
-    public static async delete(id: string | number): Promise<any> {
+    public static async delete(id: string | number | {[key:string]: string | number}): Promise<any> {
         await this.loadSchema();
-        if (this._useSoftDelete) {
-            return this.getConnection().from(this._table).update({ deleted_at: new Date() }).eq(this._idColumn, id).select();
+        if(this._idColumn instanceof Array && typeof id != 'object') {
+            throw new Error('Cannot delete multiple columns with a single id');
+        } else if(typeof id == 'object' && !(this._idColumn instanceof Array)) {
+            throw new Error('Cannot delete a single column with multiple ids');
         }
-        const response = await this.getConnection().from(this._table).delete().eq(this._idColumn, id).select();
+        let query = this.getConnection().from(this._table)
+
+        if (this._useSoftDelete) {
+            query = query.update({ deleted_at: new Date() })
+        } else {
+            query = query.delete()
+        }
+
+        if(this._idColumn instanceof Array) {
+            for(const key of this._idColumn) {
+                query.eq(key, typeof id == 'object' ? id[key] : id);
+            }
+        } else {
+            query.eq(this._idColumn, id);
+        }
+          
+        const response = await query.select();
         return this.make(response.data, response);
     }
 
@@ -505,10 +523,21 @@ export class Model implements ModelInterface {
 
     public async delete(options?: DeleteOptions): Promise<any> {
         await (this.constructor as typeof Model).loadSchema();
+        let query = this.getConnection().from(this._table);
         if ((this.constructor as typeof Model)._useSoftDelete || options?.mode === 'soft') {
-            return await this.getConnection().from(this._table).update({ deleted_at: new Date() }).eq(this._idColumn, this.id);
+            query = query.update({ deleted_at: new Date() })
+        } else {
+            query = query.delete()
         }
-        const response = await this.getConnection().from(this._table).delete().eq(this._idColumn, this.id);
+        
+        if(this._idColumn instanceof Array) {
+            for(const key of this._idColumn) {
+                query.eq(key, this[key]);
+            }
+        } else {
+            query.eq(this._idColumn, this[this._idColumn]);
+        }
+        const response = await query.select();
         return (this.constructor as typeof Model).make(response.data, response);
     }
 
@@ -519,10 +548,8 @@ export class Model implements ModelInterface {
             data.updated_at = new Date();
         }
         const response = await (this.getConnection()).from(this._table).insert(data).select().single();
-
-        const object = new this(response);
-        object._response = response;
-        return object;
+        const instance = this.make(response.data, response);
+        return instance;
     }
 
     public static async find(id: string | number): Promise<any> {
@@ -564,23 +591,23 @@ export class Model implements ModelInterface {
         return returnObject;
     }
 
-    public static async where(column: string, postgresOperator: string, value: any, options?: DataFetchOptions): Promise<Collection<any>> {
-        await this.loadSchema();
-        const query = this.getConnection().from(this._table).select(this._defaultSelectQuery).filter(column, postgresOperator, value);
-        if (options?.orderBy) {
-            query.order(options.orderBy, { ascending: options.direction === 'asc' });
-        }
-        if (options?.limit) {
-            query.limit(options.limit);
-        }
-        if (options?.withTrashed && this._useSoftDelete) {
-            query.is(`deleted_at`, null);
-        }
-        const { data, error, status } = await query;
-        const collection = new Collection(data);
-        collection.response = { error, status };
-        return (new Collection(data));
-    }
+    // public static async where(column: string, postgresOperator: string, value: any, options?: DataFetchOptions): Promise<Collection<any>> {
+    //     await this.loadSchema();
+    //     const query = this.getConnection().from(this._table).select(this._defaultSelectQuery).filter(column, postgresOperator, value);
+    //     if (options?.orderBy) {
+    //         query.order(options.orderBy, { ascending: options.direction === 'asc' });
+    //     }
+    //     if (options?.limit) {
+    //         query.limit(options.limit);
+    //     }
+    //     if (options?.withTrashed && this._useSoftDelete) {
+    //         query.is(`deleted_at`, null);
+    //     }
+    //     const { data, error, status } = await query;
+    //     const collection = new Collection(data);
+    //     collection.response = { error, status };
+    //     return (new Collection(data));
+    // }
 
     public static async only(column: string, value: any): Promise<Collection<any>> {
         await this.loadSchema();
@@ -627,11 +654,27 @@ export class Model implements ModelInterface {
         return new this(data);
     }
 
-    public static async whereAll(conditions: { column?: string, whereColumn: string, whereValue: any }[]) {
+    public static async where(conditions: { column: string, value: any, operator?: string}[], options?: DataFetchOptions) {
         await this.loadSchema();
         const query = this.getConnection().from(this._table).select(this._defaultSelectQuery);
+        
         for (const condition of conditions) {
-            query.eq(condition.whereColumn, condition.whereValue);
+            if(condition.operator) {
+                const operator = resolveOperator(condition.operator);
+                operator.negated ? query.not(condition.column, operator.operator, condition.value) : query.filter(condition.column, operator.operator, condition.value);
+            } else {
+                query.eq(condition.column, condition.value);
+            }
+        }
+
+        if (options?.orderBy) {
+            query.order(options.orderBy, { ascending: options.direction === 'asc' });
+        }
+        if (options?.limit) {
+            query.limit(options.limit);
+        }
+        if (options?.withTrashed && this._useSoftDelete) {
+            query.is(`deleted_at`, null);
         }
         const { data, error, status } = await query;
         const collection = new Collection(data);
