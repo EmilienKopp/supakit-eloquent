@@ -174,7 +174,8 @@ export class Model implements ModelInterface {
 
         this._idColumn = (this.constructor as typeof Model)._idColumn ?? 'id';
         const _casts = Object.getPrototypeOf(this).constructor._casts;
-
+        this._connector = (this.constructor as typeof Model)._connector;
+        
         // Build from rowData 
         if (rowData?.data) {
             for (const [key, value] of Object.entries(rowData.data)) {
@@ -322,7 +323,21 @@ export class Model implements ModelInterface {
     }
 
     public connect() {
-        this._connector = getSupabaseClient(this._connectorUrl, this._connectorKey);
+        console.log('Connecting to supabase')
+        try {
+            if ((this.constructor as typeof Model)._connector && (this.constructor as typeof Model)._connector instanceof SupabaseClient)  {
+                this._connector = (this.constructor as typeof Model)._connector;
+            } else if((this.constructor as typeof Model)._connectorUrl && (this.constructor as typeof Model)._connectorKey) {
+                this._connectorUrl = (this.constructor as typeof Model)._connectorUrl;
+                this._connectorKey = (this.constructor as typeof Model)._connectorKey;
+                this._connector = getSupabaseClient(this._connectorUrl, this._connectorKey);
+            } else {
+                throw new Error('Invalid connection parameters');
+            }
+        } catch (error) {
+            console.error('Error connecting to supabase', error);
+        }
+
         return this;
     }
 
