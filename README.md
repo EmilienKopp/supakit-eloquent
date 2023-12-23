@@ -1,6 +1,7 @@
 ![npm](https://img.shields.io/npm/v/supakit-eloquent)
 ![npm](https://img.shields.io/npm/dy/:packageName)
 
+⚠️ This project is still in development and is not ready for production use. ⚠️
 
 
 # Project Name
