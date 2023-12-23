@@ -1,0 +1,40 @@
+{
+  "name": "supakit-eloquent",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "main": "src/index.ts",
+  "keywords": [
+    "supabase",
+    "orm",
+    "eloquent",
+    "js",
+    "sveltekit"
+  ],
+  "files": [
+    "./src/generate-describe-table.cjs",
+    "dist",
+    "lib",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "coverage": "vitest --coverage",
+    "generate-describe-table": "node ./src/generate-describe-table.cjs"
+  },
+  "devDependencies": {
+    "@types/pluralize": "^0.0.33",
+    "@vitest/coverage-v8": "^1.1.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8",
+    "vitest": "^1.1.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.1",
+    "pluralize": "^8.0.0",
+    "zod": "^3.22.4"
+  }
+}
