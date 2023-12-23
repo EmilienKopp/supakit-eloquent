@@ -1,4 +1,4 @@
-import * as pluralizer from "pluralize";
+import pluralize from "pluralize";
 
 /**
  * Converts a string to snake_case, replacing dashes and non-starting capital letters with underscores
@@ -23,7 +23,7 @@ export function toSnakeCase(str: string) {
 export function singularPascalToPluralSnake(str: string) {
     // Regex to check whether a string is PascalCase (The first letter is capitalized)
     if(! /^[A-Z]/.test(str)) throw new Error("Input must be PascalCase");
-    return pluralizer.plural(toSnakeCase(str));
+    return pluralize.plural(toSnakeCase(str));
 }
 
 /**
