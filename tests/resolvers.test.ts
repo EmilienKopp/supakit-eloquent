@@ -29,3 +29,31 @@ test("resolveOperator to resolve custom operators", () => {
         expect(resolveOperator(operator)).toEqual({operator, negated: false});
     });
 });
+
+test("resolveOperator to resolve greater than operators", () => {
+    const greaterThanOperators = ['>', 'gt', 'greater than'];
+    greaterThanOperators.forEach(operator => {
+        expect(resolveOperator(operator)).toEqual({operator: 'gt', negated: false});
+    });
+});
+
+test("resolveOperator to resolve lesser than operators", () => {
+    const lesserThanOperators = ['<', 'lt', 'less than'];
+    lesserThanOperators.forEach(operator => {
+        expect(resolveOperator(operator)).toEqual({operator: 'lt', negated: false});
+    });
+});
+
+test("resolveOperator to resolve greater than or equal to operators", () => {
+    const gteOperators = ['>=', 'gte', 'greater than or equal to'];
+    gteOperators.forEach(operator => {
+        expect(resolveOperator(operator)).toEqual({operator: 'gte', negated: false});
+    });
+});
+
+test("resolveOperator to resolve lesser than or equal to operators", () => {
+    const lteOperators = ['<=', 'lte', 'less than or equal to'];
+    lteOperators.forEach(operator => {
+        expect(resolveOperator(operator)).toEqual({operator: 'lte', negated: false});
+    });
+});
