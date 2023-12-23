@@ -13,13 +13,67 @@ A brief description of the project.
 
 ## Installation
 
-Instructions on how to install and set up the project.
+```bash
+npm install supakit-eloquent
+```
 
 ## Usage
 
-Instructions on how to use the project and any relevant examples.
+## Initialization
 
-### Model Class
+1. SvelteKit
+
+```typescript
+// src/hooks.ts
+import { Model } from 'supakit-eloquent';
+
+export const handle: Handle = async ({ event, resolve }) => {
+    event.locals.supabase = createSupabaseServerClient({
+        supabaseUrl: supabaseURL,
+        supabaseKey: supabaseAnonKey,
+        event,
+    })
+    Model.setConnection({client: event.locals.supabase});
+    // or
+    Model.setConnection({
+        supabaseUrl: supabaseURL,
+        supabaseKey: supabaseAnonKey,
+    });
+}
+```
+
+2. Other frameworks / vanilla JS
+
+Yet to be tested. Use `Model.setConnection()` to set the connection to supabase wherever you
+need to make sure it runs on startup / on every request.
+
+```typescript
+import { Model } from 'supakit-eloquent';
+
+Model.setConnection({client: event.locals.supabase});
+// or
+Model.setConnection({
+    supabaseUrl: supabaseURL,
+    supabaseKey: supabaseAnonKey,
+});
+
+```
+
+Alternatively, you can set the client in the extended model classes or dynamically wherever you need it.
+
+```typescript
+import { Model } from 'supakit-eloquent';
+import { createClient } from '@supabase/supabase-js';
+
+export class User extends Model {
+    protected static _connector = createClient({
+        supabaseUrl: supabaseURL,
+        supabaseKey: supabaseAnonKey,
+    });
+}
+```
+
+### Extending the Model Class
 
 The `Model` class is a core component of this project. It provides an abstraction for interacting with supabase. To use the `Model` class, follow these steps:
 
@@ -61,14 +115,13 @@ export class BookmarkedPost extends Model {
 }
 ```
 
-
 ## Contributing
 
-Guidelines for contributing to the project and how to submit pull requests.
+Contributions are always welcome! I am yet to define guidelines for contributing to this project. In the meantime, feel free to open an issue or a pull request.
 
 ## License
 
-Information about the project's license and any additional terms or conditions.
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
 ## Contact
 
