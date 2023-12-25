@@ -22,7 +22,8 @@ export function toSnakeCase(str: string) {
  */
 export function singularPascalToPluralSnake(str: string) {
     // Regex to check whether a string is PascalCase (The first letter is capitalized)
-    if(! /^[A-Z]/.test(str)) throw new Error("Input must be PascalCase");
+    if(! /^[A-Z]/.test(str)) return str;
+    
     return pluralize.plural(toSnakeCase(str));
 }
 
