@@ -58,7 +58,6 @@ test('Table name is set statically', () => {
 
 test('Table name is set on instance', () => {
     const entry = new DiaryEntry({ title: 'Hello World', content: 'This is a test entry' });
-    console.log(entry);
 });
 
 test('Can fetch schema', async () => {
@@ -227,6 +226,21 @@ test(' .duplicate() duplicates a record', async () => {
     await duplicated.delete();
 });
 
+test(' static .duplicate() duplicates a record', async () => {
+    const entry = await DiaryEntry.create({ title: 'Hello World', content: 'This is a test entry' });
+    const duplicated = await DiaryEntry.duplicate(entry.id);
+    expect(duplicated).toBeInstanceOf(Object);
+    expect(duplicated.title).toBe('Hello World');
+    expect(duplicated.content).toBe('This is a test entry');
+    expect(duplicated.response()).toBeDefined();
+    expect(duplicated.response().status).toBeGreaterThanOrEqual(200);
+    expect(duplicated.response().status).toBeLessThan(300);
+    expect(duplicated.response().data).toBeDefined();
+    expect(isEmpty(duplicated.response().data)).toBeFalsy();
+    await entry.delete();
+    await duplicated.delete();
+});
+
 test('can delete with static .delete()', async () => {
     const entry = await DiaryEntry.create({ title: 'Hello World', content: 'This is a test entry' });
     const deleted = await DiaryEntry.delete(entry.id);
@@ -297,7 +311,7 @@ test('.where() returns a new collection matching conditions with operators', asy
     const otherMatchingEntry = await DiaryEntry.create({ title: 'C', content: 'Other entry', mood_score: 20 });
     const entries = await DiaryEntry.where([{column: 'mood_score', operator: '<=', value: 20}]);
     expect(entries).toBeInstanceOf(Collection);
-    console.log(entries);
+
     expect(entries.length).toBe(2);
     expect(entries.every((entry: any) => entry.mood_score <= 20)).toBeTruthy();
     await matchingEntry.delete();

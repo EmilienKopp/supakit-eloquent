@@ -44,6 +44,11 @@ type DeleteOptions = {
     mode: 'soft' | 'hard',
 }
 
+export type DuplicateOption = {
+    except?: string[],
+    only?: string[],
+}
+
 export type Relationship = {
     relation: string,
     type: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many',
@@ -66,7 +71,7 @@ export interface ModelInterface {
     set: (key: string, value: any) => void,
     save: (additionalData?: any) => Promise<any>,
     update: (data: any) => Promise<any>,
-    duplicate: () => Promise<any>,
+    duplicate: (option: DuplicateOption) => Promise<any>,
     resetHasMany: (relation: string, foreignIdColumn: string, distantId: string, data: any, options?: ModelOptions) => Promise<any>,
     delete: () => Promise<any>,
     whereHas: (relation: string, column: string, operator: string, value: any) => Promise<any>,
@@ -467,9 +472,22 @@ export class Model implements ModelInterface {
         return this;
     }
 
-    public async duplicate(): Promise<any> {
+    public async duplicate(options?: DuplicateOption): Promise<any> {
         await (this.constructor as typeof Model).loadSchema();
-        const { id, ...attributes } = this.attributes();
+        let { id, ...attributes } = this.attributes();
+
+        if(options) {
+            attributes = Object.fromEntries(Object.entries(attributes).filter(([key]) => {
+                if (options.except) {
+                    return !options.except.includes(key);
+                } else if (options.only) {
+                    return options.only.includes(key);
+                } else {
+                    return true;
+                }
+            }));
+        }
+
         if (this._useTimestamps) {
             if ('created_at' in attributes) attributes.created_at = new Date();
             if ('updated_at' in attributes) attributes.updated_at = new Date();
@@ -477,6 +495,32 @@ export class Model implements ModelInterface {
         const response = await this.getConnection().from(this._table).insert(attributes).select().maybeSingle();
         return (this.constructor as typeof Model).make(response.data, response);
     }
+
+    public static async duplicate(id: string | number | {[key:string]: string | number}, options?: DuplicateOption): Promise<any> {
+        await this.loadSchema();
+        if(this._idColumn instanceof Array && typeof id != 'object') {
+            throw new Error('Cannot duplicate multiple columns with a single id');
+        } else if(typeof id == 'object' && !(this._idColumn instanceof Array)) {
+            throw new Error('Cannot duplicate a single column with multiple ids');
+        }
+        let query = this.getConnection().from(this._table)
+
+        if (this._useTimestamps) {
+            query = query.update({ created_at: new Date(), updated_at: new Date() })
+        }
+
+        if(this._idColumn instanceof Array) {
+            for(const key of this._idColumn) {
+                query.eq(key, typeof id == 'object' ? id[key] : id);
+            }
+        } else {
+            query.eq(this._idColumn, id);
+        }
+          
+        const response = await query.select().single();
+        return this.make(response.data, response);
+    }
+
 
     public static async delete(id: string | number | {[key:string]: string | number}): Promise<any> {
         await this.loadSchema();
