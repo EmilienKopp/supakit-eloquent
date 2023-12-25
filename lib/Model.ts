@@ -498,27 +498,8 @@ export class Model implements ModelInterface {
 
     public static async duplicate(id: string | number | {[key:string]: string | number}, options?: DuplicateOption): Promise<any> {
         await this.loadSchema();
-        if(this._idColumn instanceof Array && typeof id != 'object') {
-            throw new Error('Cannot duplicate multiple columns with a single id');
-        } else if(typeof id == 'object' && !(this._idColumn instanceof Array)) {
-            throw new Error('Cannot duplicate a single column with multiple ids');
-        }
-        let query = this.getConnection().from(this._table)
-
-        if (this._useTimestamps) {
-            query = query.update({ created_at: new Date(), updated_at: new Date() })
-        }
-
-        if(this._idColumn instanceof Array) {
-            for(const key of this._idColumn) {
-                query.eq(key, typeof id == 'object' ? id[key] : id);
-            }
-        } else {
-            query.eq(this._idColumn, id);
-        }
-          
-        const response = await query.select().single();
-        return this.make(response.data, response);
+        const instance = await this.find(id);
+        return await instance.duplicate(options);
     }
 
 
@@ -611,7 +592,7 @@ export class Model implements ModelInterface {
         return instance;
     }
 
-    public static async find(id: string | number): Promise<any> {
+    public static async find(id: string | number | {[key:string]: string | number}): Promise<any> {
         await this.loadSchema();
         const { data, error, status } = await this.getConnection().from(this._table).select(this._defaultSelectQuery).eq(this._idColumn, id).single(); 
         const instance = this.make(data, { data, error, status  });
