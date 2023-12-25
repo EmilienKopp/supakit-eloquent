@@ -7,59 +7,46 @@ describe.concurrent('Strings', () => {
 
     test('pluralizing a word', () => {
         const test = pluralizer.plural('word');
-        console.log(`Plural of word is ${test}`);
         expect(test).toBe('words');
     });
 
     test('snake case from PascalCase', () => {
         const test = toSnakeCase('EmployeeRecord');
-        console.log(`Snake case of EmployeeRecord is ${test}`);
         expect(test).toBe('employee_record');
     });
 
     test('snake case from camelCase', () => {
         const test = toSnakeCase('employeeRecord');
-        console.log(`Snake case of employeeRecord is ${test}`);
         expect(test).toBe('employee_record');
     });
 
     test('snake case from kebab-case', () => {
         const test = toSnakeCase('employee-record');
-        console.log(`Snake case of employee-record is ${test}`);
         expect(test).toBe('employee_record');
     });
 
     test('Singular PascalCase to plural snake_case', () => {
         let test = singularPascalToPluralSnake('EmployeeRecord');
-        console.log(`Snake case of EmployeeRecord is ${test}`);
         expect(test).toBe('employee_records');
         test = singularPascalToPluralSnake('Employee');
-        console.log(`Snake case of Employee is ${test}`);
         expect(test).toBe('employees');
         test = singularPascalToPluralSnake('Person');
-        console.log(`Snake case of Person is ${test}`);
         expect(test).toBe('people');
         test = singularPascalToPluralSnake('TrainingSession');
-        console.log(`Snake case of TrainingSession is ${test}`);
         expect(test).toBe('training_sessions');
         test = singularPascalToPluralSnake('TrainingSessionTemplate');
-        console.log(`Snake case of TrainingSessionTemplate is ${test}`);
         expect(test).toBe('training_session_templates');
         test = singularPascalToPluralSnake('ActionCard');
-        console.log(`Snake case of ActionCard is ${test}`);
         expect(test).toBe('action_cards');
         test = singularPascalToPluralSnake('ReflectionMemo');
-        console.log(`Snake case of ReflectionMemo is ${test}`);
         expect(test).toBe('reflection_memos');
         test = singularPascalToPluralSnake('Reflection_Question');
-        console.log(`Snake case of Reflection_Question is ${test}`);
         expect(test).toBe('reflection_questions');
 
     });
 
     test('tokenize() can tokenize regular alphanumeric strings', () => {
         const test = tokenize('hello world, I am a 900 year-old time lord, and I hate Daleks!');
-        console.log(`Tokenized string is ${test}`);
         expect(test).toEqual({
             "900": 1,
             "a": 1,
@@ -88,30 +75,24 @@ describe.concurrent('Strings', () => {
         const test = cosineSimilarity(
             'hello world, I am a 900 year-old time lord, and I hate Daleks!', 
             'hello world, I am a 900 year-old time lord, and I hate Daleks!');
-        console.log(`Cosine similarity is ${test}`);
         expect(test).toBe(1);
 
         const test2 = cosineSimilarity(
             'hello world, I am a 900 year-old time lord, and I hate Daleks!', 
             'hello world, I am a 900 year-old time lord, and I hate Cybermen!');
-        console.log(`Cosine similarity is ${test2}`);
         expect(test2).toBeGreaterThan(0.5);
         expect(test2).toBeLessThan(1);
 
         const test3 = cosineSimilarity( '', 'test');
-        console.log(`Cosine similarity is ${test3}`);
         expect(test3).toBe(0);
 
         const test4 = cosineSimilarity( 'test', '');
-        console.log(`Cosine similarity is ${test4}`);
         expect(test4).toBe(0);
 
         const test5 = cosineSimilarity( '', '');
-        console.log(`Cosine similarity is ${test5}`);
         expect(test5).toBe(0);
 
         const test6 = cosineSimilarity( '田中タロウ', 'どらえもん');
-        console.log(`Cosine similarity is ${test6}`);
         expect(test6).toBe(0);
     });
 
@@ -119,60 +100,51 @@ describe.concurrent('Strings', () => {
         const test = computeDifference(
             'hello world, I am a 900 year-old time lord, and I hate Daleks!', 
             'hello world, I am a 900 year-old time lord, and I hate Daleks!');
-        console.log(`Difference is ${test}%`);
         expect(test).toBe(0);
 
         const test2 = computeDifference(
             'hello world, I am a 900 year-old time lord, and I hate Daleks!', 
             'hello world, I am a 900 year-old time lord, and I hate Cybermen!');
-        console.log(`Difference is ${test2}%`);
         expect(test2).toBeGreaterThan(0);
         expect(test2).toBeLessThan(100);
 
         const test3 = computeDifference(
             'abcd efghi ?', 
             'jkl monp !');
-        console.log(`Difference is ${test3}%`);
         expect(test3).toBe(100)
     });
 
     test('linkify() returns the same string if there are no URLs or email addresses', () => {
         const str = 'This is a string with no URLs or email addresses';
         const test = linkify(str);
-        console.log(`Linkified string is ${test}`);
         expect(test).toBe(str);
 
         const str2 = '';
         const test2 = linkify(str2);
-        console.log(`Linkified string is ${test2}`);
         expect(test2).toBe(str2);
     });
 
     test('linkify() can linkify a string containing a http URL', () => {
         const str = 'This is a string containing a URL: http://www.google.com';
         const test = linkify(str);
-        console.log(`Linkified string is ${test}`);
         expect(test).toBe('This is a string containing a URL: <a class="text-blue-500 hover:text-lime-600 underline cursor-pointer" href="http://www.google.com" target="_blank">http://www.google.com</a>');
     });
 
     test('linkify() can linkify a string containing a https URL', () => {
         const str = 'This is a string containing a URL: https://google.com';
         const test = linkify(str);
-        console.log(`Linkified string is ${test}`);
         expect(test).toBe('This is a string containing a URL: <a class="text-blue-500 hover:text-lime-600 underline cursor-pointer" href="https://google.com" target="_blank">https://google.com</a>');
     });
 
     test('linkify() can linkify a string containing a URL with a path', () => {
         const str = 'This is a string containing a URL: https://www.google.com/search?q=hello+world';
         const test = linkify(str);
-        console.log(`Linkified string is ${test}`);
         expect(test).toBe('This is a string containing a URL: <a class="text-blue-500 hover:text-lime-600 underline cursor-pointer" href="https://www.google.com/search?q=hello+world" target="_blank">https://www.google.com/search?q=hello+world</a>');
     });
 
     test('linkify() can linkify a string with an email address', () => {
         const str = 'This is a string containing an email address: test@example.com';
         const test = linkify(str);
-        console.log(`Linkified string is ${test}`);
         expect(test).toBe('This is a string containing an email address: <a class="text-blue-500 hover:text-lime-600 underline cursor-pointer" href="mailto:test@example.com">test@example.com</a>');
     });
 
@@ -220,36 +192,29 @@ describe.concurrent('Strings', () => {
 
     test('boldify can wrap lookup values in <strong></strong>', () => {
         const test = boldify('hello world', ['hello']);
-        console.log(`Boldified string is ${test}`);
         expect(test).toBe('<strong>hello</strong> world');
 
         const test2 = boldify('hello world', ['world']);
-        console.log(`Boldified string is ${test2}`);
         expect(test2).toBe('hello <strong>world</strong>');
 
         const test3 = boldify('hello world, I am the Doctor .',
             ['hello', 'Doctor']);
-        console.log(`Boldified string is ${test3}`);
         expect(test3).toBe('<strong>hello</strong> world, I am the <strong>Doctor</strong> .');
     })
 
     test('nospace can remove spaces from a string', () => {
         const test = nospace('hello world');
-        console.log(`nospace string is ${test}`);
         expect(test).toBe('helloworld');
 
         const test2 = nospace('hello world, I am the Doctor .');
-        console.log(`nospace string is ${test2}`);
         expect(test2).toBe('helloworld,IamtheDoctor.');
     })
 
     test('dashToSlash can convert a string with dashes to a string with slashes', () => {
         const test = dashToSlash('hello-world');
-        console.log(`dashToSlash string is ${test}`);
         expect(test).toBe('hello/world');
 
         const test2 = dashToSlash('hello-world-I-am-the-Doctor');
-        console.log(`dashToSlash string is ${test2}`);
         expect(test2).toBe('hello/world/I/am/the/Doctor');
     })
 

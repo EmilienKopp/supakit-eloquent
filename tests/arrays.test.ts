@@ -77,7 +77,6 @@ describe.concurrent('Array utilities', () => {
             { value: 2, label: 'bar' }
         ];
         const result = toSelectOptions(arr, 'id', 'name');
-        console.log(result);
         expect(result).toEqual(expected);
         // Check the items are of type SelectOption
         expectTypeOf(result[0]).toEqualTypeOf<SelectOption>();

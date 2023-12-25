@@ -12,7 +12,6 @@ test('parseTableDescription() can take a dable description and return an object'
         supabaseUrl: import.meta.env.VITE_SUPABASE_URL as string, })
     
     const { data: description, error, status } = await DiaryEntry.getConnection().schema('public').rpc('describe_table', { tablename: 'diary_entries' });
-    console.log(description, error,status);
 
     expect(parseTableDescription(description)).toEqual({
         created_at: {
