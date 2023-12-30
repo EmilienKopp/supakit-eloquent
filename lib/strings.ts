@@ -27,6 +27,10 @@ export function singularPascalToPluralSnake(str: string) {
     return pluralize.plural(toSnakeCase(str));
 }
 
+export function singular(str: string) {
+    return pluralize.singular(str);
+}
+
 /**
  * 
  * @param paragraph the paragraph to tokenize

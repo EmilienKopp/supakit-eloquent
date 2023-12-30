@@ -64,10 +64,11 @@ describe.concurrent('Strings', () => {
         });
     });
 
-    test(' singularPascalCaseToPluralSnake() throws if the input is not in PascalCase', () => {
-        expect(() => singularPascalToPluralSnake('employeeRecord')).toThrow();
-        expect(() => singularPascalToPluralSnake('employee-record')).toThrow();
-        expect(() => singularPascalToPluralSnake('employee_record')).toThrow();
+    test(' singularPascalCaseToPluralSnake() returns the input as is if it is not in PascalCase', () => {
+        expect(singularPascalToPluralSnake('employeeRecord')).toBe('employeeRecord');
+        expect(singularPascalToPluralSnake('employee_record')).toBe('employee_record');
+        expect(singularPascalToPluralSnake('employee-record')).toBe('employee-record');
+        expect(singularPascalToPluralSnake('employee record')).toBe('employee record');
     });
 
 
