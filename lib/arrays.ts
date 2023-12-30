@@ -26,6 +26,7 @@ export type Condition = {
  * @returns a random item from the array
  */
 export function random(arr: Array<any>): any {
+  if(!arr || !arr.length) return null;
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
@@ -36,9 +37,14 @@ export function random(arr: Array<any>): any {
  * @returns an array of the same arrays with the column removed
  */
 export function deleteColumn(arr: Array<Array<any>>, columnIndex: number) {
-  if (!arr || !arr.length) throw new Error('deleteColumn requires a non-empty array argument');
+  if (!arr || !arr.length) {
+    return []
+  }
   const minLength = Math.min(...arr.map(el => el.length));
-  if (columnIndex >= minLength) throw new Error('column index is out of bounds');
+  if (columnIndex >= minLength) {
+    console.warn(`Column index ${columnIndex} is out of bounds for array of length ${minLength}`);
+    return arr;
+  }
   for (let i = 0; i < arr.length; i++) {
     arr[i].splice(columnIndex, 1);
   }
