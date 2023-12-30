@@ -1,6 +1,7 @@
+import { Collect, Collection } from "../lib/Collection";
 import { describe, expect, test } from "vitest";
 
-import { Collection } from "../lib/Collection";
+import { Model } from './../lib/Model';
 
 describe.concurrent("collection", () => {
 
@@ -34,6 +35,12 @@ describe.concurrent("collection", () => {
         expect(collection).toHaveProperty('includes');
         expect(collection).toHaveProperty('at');
         expect(collection).toHaveProperty('concat');
+    });
+
+    test('shold be able to create from the Collect function', () => {
+        const collection = Collect(['foo', 'bar', 'baz']);
+        expect(collection).toBeInstanceOf(Collection);
+        expect(collection.length).toBe(3);
     });
 
     test('should be able to add items to the collection using array methods', () => {
@@ -127,6 +134,22 @@ describe.concurrent("collection", () => {
         expect(distinct.length).toBe(6);
     });
 
+    test(' .distinct(key, formatter) should return a new collection with distinct values formatted', () => {
+        const collection = new Collection();
+        collection.push({ foo: 'foo' });
+        collection.push({ foo: 'bar' });
+        collection.push({ foo: 'baz' });
+        collection.push({ foo: 'foo' });
+        collection.push({ foo: 'bar' });
+        collection.push({ foo: 'baz' });
+        const distinct = collection.distinct('foo', (value: string) => value.toUpperCase());
+        expect(distinct).toBeInstanceOf(Collection);
+        expect(distinct.length).toBe(3);
+        expect(distinct[0].foo).toBe('FOO');
+        expect(distinct[1].foo).toBe('BAR');
+        expect(distinct[2].foo).toBe('BAZ');
+    });
+
     test('.unique() should return a new collection with unique values', () => {
         const collection = new Collection();
         collection.push('foo');
@@ -140,6 +163,16 @@ describe.concurrent("collection", () => {
         expect(unique.length).toBe(3);
     });
 
+    test(' .unique() should not do anything when called on Collection<object>', () => {
+        const collection = new Collection();
+        collection.push({foo: 'foo'});
+        collection.push({foo: 'bar'});
+        const unique = collection.unique();
+        expect(unique).toBeInstanceOf(Collection);
+        expect(unique.length).toBe(2);
+        expect(unique).toEqual(collection);
+    });
+
     test('concat() can concatenate arrays and collections', () => {
         const collection = new Collection(['foo', 'bar', 'baz']);
         const otherCollection = new Collection(['foo', 'bar', 'baz']);
@@ -147,6 +180,71 @@ describe.concurrent("collection", () => {
         const result = collection.concat(otherCollection, arr);
         expect(result).toBeInstanceOf(Collection);
         expect(result.length).toBe(9);
+    });
+
+    test('toSelectOptions() can return a collection of select options', () => {
+        const collection = new Collection([
+            { id: 1, name: 'foo', city: 'bar' },
+            { id: 2, name: 'bar', city: 'baz' },
+            { id: 3, name: 'baz', city: 'foo' },
+        ])
+        const options = collection.toSelectOptions('id', 'name');
+        expect(options).toBeInstanceOf(Collection);
+        expect(options.length).toBe(3);
+        expect(options[0]).toEqual({ value: 1, label: 'foo' });
+        expect(options[1]).toEqual({ value: 2, label: 'bar' });
+        expect(options[2]).toEqual({ value: 3, label: 'baz' });
+    });
+
+    test('toSelectOptions will return the collection if called on a collection of primitives', () => {
+        const collection = new Collection(['foo', 'bar', 'baz']);
+        const options = collection.toSelectOptions('id', 'name');
+        expect(options).toBeInstanceOf(Collection);
+        expect(options.length).toBe(3);
+        expect(options).toEqual(collection);
+    });
+
+    test('toSelectOptions will apply the formatter if provided', () => {
+        const collection = new Collection([
+            { id: 1, name: 'foo', city: 'bar' },
+            { id: 2, name: 'bar', city: 'baz' },
+            { id: 3, name: 'baz', city: 'foo' },
+        ])
+        const options = collection.toSelectOptions('id', 'name', (name: string) => name.toUpperCase());
+        expect(options).toBeInstanceOf(Collection);
+        expect(options.length).toBe(3);
+        expect(options[0]).toEqual({ value: 1, label: 'FOO' });
+        expect(options[1]).toEqual({ value: 2, label: 'BAR' });
+        expect(options[2]).toEqual({ value: 3, label: 'BAZ' });
+    });
+
+    test('toSelectOptions will concatenate the concatColumn if provided', () => {
+        const collection = new Collection([
+            { id: 1, name: 'foo', city: 'bar' },
+            { id: 2, name: 'bar', city: 'baz' },
+            { id: 3, name: 'baz', city: 'foo' },
+        ])
+        const options = collection.toSelectOptions('id', 'name', null, 'city', 'in');
+        expect(options).toBeInstanceOf(Collection);
+        expect(options.length).toBe(3);
+        expect(options[0]).toEqual({ value: 1, label: 'foo (in bar)' });
+        expect(options[1]).toEqual({ value: 2, label: 'bar (in baz)' });
+        expect(options[2]).toEqual({ value: 3, label: 'baz (in foo)' });
+    });
+
+    test('the iterator should return the value and the "done" property', () => {
+        const collection = new Collection(['foo', 'bar', 'baz']);
+        
+        const first = collection[Symbol.iterator]().next();
+        expect(first.value).toBe('foo');
+        expect(first.done).toBe(false);
+        const second = collection[Symbol.iterator]().next();
+        expect(second.value).toBe('foo');
+        expect(second.done).toBe(false);
+        const third = collection[Symbol.iterator]().next();
+        expect(third.value).toBe('foo');
+        expect(third.done).toBe(false);
+
     });
 
     test(' first() should return the first item in the collection without mutating it', () => {
@@ -400,6 +498,72 @@ describe.concurrent("collection", () => {
         collection.push(3);
         const at = collection.at(1);
         expect(at).toBe(2);
+    });
+
+    test(' constructor should cast to a Model object when provided', () => {
+        class SimpleModel extends Model { }
+        const collection = new Collection([{
+            foo: 'foo',
+            bar: 'bar',
+            baz: 'baz',
+        }], SimpleModel);
+        console.log(collection);
+        expect(collection.every((el: unknown) => el instanceof SimpleModel)).toBe(true);
+    });
+
+    test(' [] getter can access indices', () => {
+        const collection = new Collection([1,2,3]);
+        expect(collection[0]).toBe(1);
+        expect(collection[1]).toBe(2);
+        expect(collection[2]).toBe(3);
+    });
+
+    test(' [] setter can set values at indices', () => {
+        const collection = new Collection([1,2,3]);
+        collection[0] = 4;
+        collection[1] = 5;
+        collection[2] = 6;
+        expect(collection[0]).toBe(4);
+        expect(collection[1]).toBe(5);
+        expect(collection[2]).toBe(6);
+    });
+
+    test(' select() should return a new collection with the selected keys', () => {
+        const collection = new Collection([{
+            foo: 'foo',
+            bar: 'bar',
+            baz: 'baz',
+        }]);
+        const select = collection.select('foo', 'bar');
+        expect(select).toBeInstanceOf(Collection);
+        expect(select[0]).toEqual({
+            foo: 'foo',
+            bar: 'bar',
+        });
+    });
+
+    test(' select() should warn and return the collection as is if it is not made of objects.', () => {
+        const collection = new Collection([1,2,3]);
+        const select = collection.select('foo', 'bar');
+        expect(select).toBeInstanceOf(Collection);
+        expect(select).toEqual(collection);
+    });
+
+    test('vertical() should return a new collection with the values associated to the selected key', () => {
+        const collection = new Collection([{
+            foo: 'foo',
+            bar: 'bar',
+            baz: 'baz',
+        },
+        {
+            foo: 'foo',
+            bar: 'bar',
+            baz: 'baz',
+        }]);
+        const select = collection.vertical('foo');
+        expect(select).toBeInstanceOf(Collection);
+        expect(select[0]).toEqual('foo');
+        expect(select[1]).toEqual('foo');
     });
     
 });

@@ -1,5 +1,8 @@
 import { toSelectOptions } from "./arrays";
 
+export const Collect: Function = function <T>(data: any[] | { [x: string]: any; }[] | null = [], model?: new (...args: any[]) => T) {
+    return new Collection(data, model);
+}
 export class Collection<T>  {
 
     private _originalResponseObject: any;
@@ -54,6 +57,23 @@ export class Collection<T>  {
         });
     }
 
+    public select(...keys: string[]): Collection<T> {
+        if(!keys.length) return new Collection(this.items);
+        if(!this.items.every(el => typeof el == 'object')) {
+            console.warn(`Calling Collection.select() is only available for collections of objects.`)
+            return new Collection(this.items);
+        }
+        let result: any[] = [];
+        this.forEach((el: any) => {
+            let obj: any = {};
+            keys.forEach(key => {
+                obj[key] = el[key];
+            });
+            result.push(obj);
+        });
+        return new Collection(result);
+    }
+
     public vertical(key: string): Collection<T> {
         let result: any[] = [];
         this.forEach((el:any) => {
@@ -66,7 +86,7 @@ export class Collection<T>  {
         return this.items;
     }
 
-    public first() {
+    public first(): T {
         return this.items[0] ?? null;
     }
 
@@ -139,7 +159,7 @@ export class Collection<T>  {
         return new Collection(result);
     }
 
-
+    //TODO: deprecate - This is totally useless
     public plain(): Collection<T> {
         if (!this || !this.items.length) return new Collection([]);
 
@@ -148,8 +168,13 @@ export class Collection<T>  {
 
     public toSelectOptions(valueKey: string, labelKey: string, formatter: Function | null = null,
         concatColumn: string | null = null,
-        concatPrefix: string = ''): any[] {
-        return toSelectOptions(this.items, valueKey, labelKey, formatter, concatColumn, concatPrefix);
+        concatPrefix: string = ''): Collection<any> {
+        if(!this.items.every(el => typeof el == 'object')) {
+            console.warn(`Calling Collection.toSelectOptions() is only available for collections of objects.`);
+            return new Collection(this.items);
+        }
+        const options = toSelectOptions(this.items, valueKey, labelKey, formatter, concatColumn, concatPrefix);
+        return new Collection(options);
     }
 
     public count() {
@@ -223,8 +248,8 @@ export class Collection<T>  {
         return new Collection(arr);
     }
 
-    public reverse(): T[] {
-        return this.items.reverse();
+    public reverse(): Collection<T> {
+        return new Collection(this.items.reverse());
     }
 
     public concat(...items: (T | ConcatArray<T> | Collection<T>)[]): Collection<T> {
