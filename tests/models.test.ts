@@ -1,50 +1,14 @@
 import * as pluralizer from 'pluralize';
 
+import { BookmarkedPost, Candidate, DiaryEntry, Post } from './setup.ts';
+import { Model, Relationship } from '../lib/Model';
 import { describe, expect, expectTypeOf, test } from 'vitest';
 import { singularPascalToPluralSnake, toSnakeCase } from '../lib/strings';
 
 import { Collection } from '../lib/Collection';
-import { Model } from '../lib/Model';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../lib/client';
 import { isEmpty } from '../lib/Objects';
-
-class DiaryEntry extends Model {
-    protected static _useSoftDeletes = false;
-    protected static _useTimestamps = true;   
-}
-
-class BookmarkedPost extends Model {
-    protected static _useSoftDeletes = false;
-    protected static _useTimestamps = true;
-    protected static _idColumn = ['post_id', 'candidate_id'];
-}
-
-class Post extends Model {
-    protected static _useSoftDeletes = false;
-    protected static _useTimestamps = false;   
-}
-
-class Candidate extends Model {
-    protected static _useSoftDeletes = false;
-    protected static _useTimestamps = false;   
-}
-
-
-DiaryEntry.setConnection({
-    supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-    supabaseKey: import.meta.env.VITE_SUPABASE_KEY,
-});
-
-Candidate.setConnection({
-    supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-    supabaseKey: import.meta.env.VITE_SUPABASE_KEY,
-});
-
-Post.setConnection({
-    supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-    supabaseKey: import.meta.env.VITE_SUPABASE_KEY,
-});
 
 test('Connection is created', () => {
     expect(DiaryEntry.getConnection()).toBeDefined();
@@ -54,6 +18,7 @@ test('Connection is created', () => {
 test('Table name is set statically', () => {
     const tableName = DiaryEntry.getTableName();
     expect(tableName).toBe('diary_entries');
+    expect(Post.getTableName()).toBe('posts');
 });
 
 test('Table name is set on instance', () => {
@@ -319,6 +284,18 @@ test('.where() returns a new collection matching conditions with operators', asy
     await unmatchingEntry.delete();
 });
 
+test('.first() returns the first row matching the condition', async () => {
+    const matchingEntry = await DiaryEntry.create({ title: 'Hello World', content: 'This is a test entry', mood_score: 50 });
+    const unmatchingEntry = await DiaryEntry.create({ title: 'Unmatching Entry', content: 'This is a test entry', mood_score: 10 });
+    const entry = await DiaryEntry.first([{column: 'mood_score', value: 50}]);
+    expect(entry).toBeInstanceOf(Object);
+    expect(entry?.title).toBe('Hello World');
+    expect(entry?.content).toBe('This is a test entry');
+    expect(entry?.mood_score).toBe(50);
+    await matchingEntry.delete();
+    await unmatchingEntry.delete();
+});
+
 test('.select() returns a new collection with only the selected columns', async () => {
     const entry = await DiaryEntry.create({ title: 'Hello World', content: 'This is a test entry', mood_score: 50 });
     const entries = await DiaryEntry.select('title,mood_score', );
@@ -405,3 +382,29 @@ test('.getIdColumn() returns the id column', async () => {
     const idColumn = User.getIdColumn();
     expect(idColumn).toBe('user_id');
 });
+
+test('can build from the schema if it is provided an no argument is passed to constructor', async () => {
+    const post = new Post();
+    expect(post).toBeInstanceOf(Post);
+    expect(Post.getConnection()).toBeDefined();
+    expect(post.getConnection()).toBeInstanceOf(SupabaseClient);
+    expect(Post.getTableName()).toBe('posts');
+    expect(Post.getIdColumn()).toBe('id');
+    expect(post).toHaveProperty('title');
+    expect(post).toHaveProperty('content');
+    expect(post).toHaveProperty('created_at');
+    expect(post).toHaveProperty('candidate_id');
+});
+
+test('can define relationships', async () => {
+    class MyPost extends Model {
+        protected static _table = 'posts';
+        protected static _useSoftDeletes = false;
+        protected static _relations: Relationship[] = [
+            { type: 'one-to-one', relation: 'Candidate', local_column: 'candidate_id', foreign_column: 'id' },
+        ];
+    }
+    const user = new MyPost();
+    expect(user).toBeInstanceOf(MyPost);
+    
+})
