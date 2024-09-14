@@ -1,7 +1,7 @@
 import { singular, singularPascalToPluralSnake } from './strings';
 
 import { Collection } from './Collection';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from './client';
 import { parseTableDescription } from './parsers';
 import { resolveOperator } from './resolvers';
@@ -152,40 +152,31 @@ export class Model implements ModelInterface {
         return this._dbSchema;
     }
 
-    // protected _serializable: PostgresSerializable = {
-    //     column: '',
-    //     data: '',
-    //     separator: ',',
-    //     final: '',
-    //     type: SerializationType.RAW,
-    //     serialized: () => {
-    //         switch(this._serializable.type) {
-    //             case SerializationType.JOIN:
-    //                 return '(' + this.data.join(this._serializable.separator) + ')';
-    //             case SerializationType.SPLIT:
-    //             case SerializationType.RAW:
-    //             default:
-    //                 return '(' + this.data + ')'
-    //         }
-    //     },
-    // };
-
+    static init(options?: {client?: SupabaseClient, name?: string}) {
+        if(!this._connector && options?.client) {
+            this._connector = options.client;
+        }
+        if (!this._table) {
+            this._table = singularPascalToPluralSnake(options?.name ?? this.name);
+        }
+        this.loadSchema();
+    }
 
     constructor(rowData?: any, metadata?: any) {
         // No data provided - build from Schema
-        if (!rowData) {
-            for (const column in (this.constructor as typeof Model)._dbSchema) {
-                if (column === 'id') {
-                    this._idColumn = 'id';
-                }
-                Object.defineProperty(this, column, {
-                    value: null,
-                    writable: true,
-                    enumerable: true,
-                    configurable: true
-                });
-            }
-        }
+        // if (!rowData) {
+        //     for (const column in (this.constructor as typeof Model)._dbSchema) {
+        //         if (column === 'id') {
+        //             this._idColumn = 'id';
+        //         }
+        //         Object.defineProperty(this, column, {
+        //             value: null,
+        //             writable: true,
+        //             enumerable: true,
+        //             configurable: true
+        //         });
+        //     }
+        // }
 
 
         //Table Name initialization
@@ -266,7 +257,6 @@ export class Model implements ModelInterface {
             }
         }
     }
-
 
     /**
      * Retrieves the actual attributes (columns) of the model (excluding relations and methods)

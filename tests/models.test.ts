@@ -7,6 +7,7 @@ import { singularPascalToPluralSnake, toSnakeCase } from '../lib/strings';
 
 import { Collection } from '../lib/Collection';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { createModel } from './../lib/createModel';
 import { getSupabaseClient } from '../lib/client';
 import { isEmpty } from '../lib/Objects';
 
@@ -408,3 +409,4 @@ test('can define relationships', async () => {
     expect(user).toBeInstanceOf(MyPost);
     
 })
+
