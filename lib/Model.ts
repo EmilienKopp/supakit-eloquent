@@ -1,7 +1,7 @@
 import { singular, singularPascalToPluralSnake } from './strings';
 
 import { Collection } from './Collection';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from './client';
 import { parseTableDescription } from './parsers';
 import { resolveOperator } from './resolvers';

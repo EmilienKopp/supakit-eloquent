@@ -1,5 +1,5 @@
 {
-  "name": "supakit-eloquent",
+  "name": "supamodel.js",
   "version": "0.1.9",
   "type": "module",
   "main": "src/index.ts",
